@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.joblib
+*.pkl
+*.h5
+.git/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+.vscode/
+.idea/
+*.swp
+*.swo

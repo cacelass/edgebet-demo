@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edgebet — Demo de Prediccion Futbol</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="description" content="Demo publica del proyecto edgebet — prediccion de futbol con modelos de ML.">
+    <meta name="robots" content="index, follow">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-brand">Edgebet <span class="badge">DEMO</span></a>
+            <div class="nav-links">
+                <a href="#about">Proyecto</a>
+                <a href="#demo">Demo</a>
+                <a href="#metrics">Metricas</a>
+                <a href="#methodology">Metodologia</a>
+                <a href="#setup">Configuracion</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Edgebet</h1>
+            <p class="hero-subtitle">Investigacion abierta sobre edge explotable en apuestas de futbol</p>
+            <p class="hero-note">Esta demo utiliza un modelo ONNX con features basicas. El sistema de produccion usa ~245 features y requiere datos historicos completos.</p>
+            <a href="#demo" class="btn btn-primary">Probar Demo</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- About Section -->
+        <section id="about" class="section">
+            <div class="container">
+                <h2>Acerca del Proyecto</h2>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <h3>Question Principal</h3>
+                        <p>Con datos publicos y un panel de casas donde se pueda ejecutar de verdad, existe una seleccion de partidos y mercados cuyo precio ejecutable bate al cierre justo de Pinnacle con margen suficiente para cubrir el coste de ejecucion?</p>
+                    </div>
+                    <div class="about-card">
+                        <h3>Enfoque</h3>
+                        <p>LightGBM con objetivo Poisson, correccion Dixon-Coles, calibration por ECE, Kelly fraccional para sizing, y tracking de CLV como metrica primaria. Todo el codigo es open-source, pero los resultados de entrenamiento y los modelos de produccion estan en un repo privado.</p>
+                    </div>
+                    <div class="about-card">
+                        <h3>Fuentes de Datos</h3>
+                        <ul>
+                            <li><strong>Understat</strong> — xG partido a partido (gratis)</li>
+                            <li><strong>API-Football v3</strong> — Lineups, injuries, stats, odds (gratis 100 req/dia)</li>
+                            <li><strong>football-data.co.uk</strong> — Resultados historicos, closing odds, arbitro (gratis)</li>
+                        </ul>
+                    </div>
+                    <div class="about-card">
+                        <h3>Estado Actual</h3>
+                        <p>A 2026-08-06 la respuesta no esta demostrada. La evidencia apunta a que no hay edge explotable tras cubrir el coste de ejecucion (techo de ejecucion negativo en las cuentas reales).</p>
+                        <p><strong>No se apuesta dinero real en ninguna liga.</strong></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Demo Section -->
+        <section id="demo" class="section section-dark">
+            <div class="container">
+                <h2>Demo Interactivo</h2>
+                <div class="privacy-notice">
+                    <h3>⚠️ Aviso de Privacidad</h3>
+                    <p>Todas las API keys que introduzcas <strong>NO seran recopiladas, almacenadas ni compartidas</strong>. Se usan exclusivamente en tu navegador para hacer peticiones directas a las APIs de terceros. Este demo no tiene servidor backend que reciba tus claves — todo se procesa localmente en tu dispositivo.</p>
+                    <p>Las claves solo se usan para tus consultas personales y nadie mas tiene acceso a ellas.</p>
+                </div>
+
+                <div class="demo-config">
+                    <h3>1. Configuracion de APIs (opcionales)</h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label for="api-key">API-Football Key <a href="https://www.api-football.com/demo" target="_blank">(obtener gratis)</a></label>
+                            <input type="password" id="api-key" placeholder="Tu clave API-Football" class="form-input">
+                        </div>
+                    </div>
+                    <p class="config-note">Si no introduces ninguna clave, el demo usara datos simulados para demostracion.</p>
+                </div>
+
+                <div class="demo-input">
+                    <h3>2. Datos del Partido</h3>
+                    <div class="input-grid">
+                        <div class="input-item">
+                            <label for="home-team">Equipo Local</label>
+                            <input type="text" id="home-team" placeholder="ej: Real Madrid" class="form-input">
+                        </div>
+                        <div class="input-item">
+                            <label for="away-team">Equipo Visitante</label>
+                            <input type="text" id="away-team" placeholder="ej: Barcelona" class="form-input">
+                        </div>
+                        <div class="input-item">
+                            <label for="league">Liga</label>
+                            <select id="league" class="form-input">
+                                <option value="laliga">LaLiga</option>
+                                <option value="premier">Premier League</option>
+                                <option value="bundesliga">Bundesliga</option>
+                                <option value="seriea">Serie A</option>
+                                <option value="ligue1">Ligue 1</option>
+                                <option value="random">Aleatorio (demo)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="advanced-toggle">
+                        <button id="toggle-advanced" class="btn btn-secondary">Mostrar/Ocultar Features Avanzadas</button>
+                    </div>
+
+                    <div id="advanced-features" class="advanced-features">
+                        <h3>3. Features Avanzadas (opcionales — mejoran prediccion)</h3>
+                        <div class="input-grid">
+                            <div class="input-item">
+                                <label for="xg-home">xG Local (ultimo partido)</label>
+                                <input type="number" step="0.01" id="xg-home" placeholder="1.85" class="form-input">
+                            </div>
+                            <div class="input-item">
+                                <label for="xg-away">xG Visitante (ultimo partido)</label>
+                                <input type="number" step="0.01" id="xg-away" placeholder="1.20" class="form-input">
+                            </div>
+                            <div class="input-item">
+                                <label for="elo-home">ELO Local</label>
+                                <input type="number" id="elo-home" placeholder="1850" class="form-input">
+                            </div>
+                            <div class="input-item">
+                                <label for="elo-away">ELO Visitante</label>
+                                <input type="number" id="elo-away" placeholder="1780" class="form-input">
+                            </div>
+                        </div>
+                        <p class="feature-note">El modelo de produccion usa ~245 features (rolling stats, Elo, H2H, fatigue, lineup, contextual, corners, etc.). Esta demo solo pide lo minimo para funcionar.</p>
+                    </div>
+
+                    <button id="predict-btn" class="btn btn-primary btn-large">Predecir</button>
+                </div>
+
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Procesando con modelo ONNX...</p>
+                </div>
+
+                <div id="results" class="results hidden">
+                    <h3>Resultados de la Prediccion</h3>
+                    <div id="result-content"></div>
+                    <div class="results-footer">
+                        <p><em>Nota: Esta prediccion usa un modelo simplificado con features basicas. Para predicciones de calidad produccion, se necesitan las ~245 features del pipeline completo con datos historicos.</em></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Metrics Section -->
+        <section id="metrics" class="section">
+            <div class="container">
+                <h2>Que Mide el Sistema (en produccion)</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>CLV (Closing Line Value)</h3>
+                        <p class="metric-desc">La metrica primaria. Mide si predijimos mejor que el cierre de Pinnacle. CLV > 0 = edge potencial.</p>
+                        <div class="metric-detail">
+                            <span class="metric-value">CLV_log = ln(ejecutada / cierre_devigado)</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Brier Score</h3>
+                        <p class="metric-desc">Error cuadratico de probabilidades predichas vs resultados reales. Se usa ECE (Expected Calibration Error) para seleccion de modelo.</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Delta Brier</h3>
+                        <p class="metric-desc">Diferencia entre Brier del modelo y Brier del cierre de mercado. Positivo = el mercado predice mejor.</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Kelly Sizing</h3>
+                        <p class="metric-desc">Dimensiona apuesta con Kelly fraccional (Quarter Kelly en produccion: 25% del Kelly completo). Capado al 3% bankroll por apuesta.</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Dixon-Coles</h3>
+                        <p class="metric-desc">Correcion bivariada para partidos 0-0 y 1-0, que el Poisson estandar sobrestima.</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Anti-Leakage</h3>
+                        <p class="metric-desc">8 tests automatizados de anti-leakage: prefijo f_ obligatorio, rolling con .shift(1), Elo pre-partido, H2H pre-partido, TimeSeriesSplit temporal.</p>
+                    </div>
+                </div>
+
+                <div class="market-cards">
+                    <h3>Mercados Cubiertos en Produccion</h3>
+                    <div class="market-grid">
+                        <span class="market-tag">1X2</span>
+                        <span class="market-tag">Over/Under 0.5-4.5</span>
+                        <span class="market-tag">BTTS</span>
+                        <span class="market-tag">Asian Handicap</span>
+                        <span class="market-tag">Quarter Lines</span>
+                        <span class="market-tag">Corners O/U</span>
+                        <span class="market-tag">Score Exacto (Top-20)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Methodology Section -->
+        <section id="methodology" class="section section-dark">
+            <div class="container">
+                <h2>Metodologia</h2>
+                <div class="methodology-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Descarga de Datos</h3>
+                            <p>football-data.co.uk + Understat xG + API-Football (lineups, injuries, odds). Pipeline configurable por liga.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Construccion de Features</h3>
+                            <p>~245 features de contrato organizadas en 28 categorias: rolling stats, Elo MoV, fatiga, H2H, lineups, arbitro, home advantage dinamico, OA-xG, strength ratings, squad quality, set pieces, momentum EWMA...</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Entrenamiento</h3>
+                            <p>LightGBM con objetivo Poisson, TimeSeriesSplit x 5 folds (assert temporal estricto), pesos temporales (semivida 180 dias), regularizacion L1+L2, early stopping por fold.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Prediccion</h3>
+                            <p>Lambdas home/away -> Poisson bivariada vectorizada + correccion Dixon-Coles + confianza (entropia de Shannon) + top-20 exactos con cuota justa + Asian Handicap completo.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h3>Calculo de EV</h3>
+                            <p>Metodo Shin para probabilidades implicitas, EV con umbral ajustado por confianza, optimal_bet con score compuesto (EV - overround penalty), Kelly sizing con cap.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <h3>Tracking de CLV</h3>
+                            <p>Captura cuotas de ejecucion vs cierre de Pinnacle. t-test + IC 90% bootstrap + sign-flip test. Deteccion de degradation en ventana de 30 apuestas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Setup Section -->
+        <section id="setup" class="section">
+            <div class="container">
+                <h2>Configurar el Sistema Completo (local)</h2>
+                <div class="setup-steps">
+                    <div class="setup-card">
+                        <h3>1. Instalacion</h3>
+                        <pre><code># Clonar repo (acceso restringido)
+git clone https://github.com/cacelass/edgebet.git
+cd edgebet
+
+# Instalar dependencias
+uv sync --extra dev --extra ml</code></pre>
+                    </div>
+                    <div class="setup-card">
+                        <h3>2. Pipeline Basico</h3>
+                        <pre><code># Descargar datos
+make data LEAGUES=laliga,premier
+
+# Construir features
+make features LEAGUES=laliga
+
+# Entrenar modelo
+make train LEAGUES=laliga
+
+# Auditar
+make audit LEAGUES=laliga</code></pre>
+                    </div>
+                    <div class="setup-card">
+                        <h3>3. Predicciones</h3>
+                        <pre><code># Predicciones del dia con fixtures reales
+make predict-today
+
+# Predicciones manuales (sin API)
+make predict-manual FIXTURES="Real Madrid;Barcelona"
+
+# Escanar apuestas con edge
+make scan DAYS=1 MIN_EDGE=0.07</code></pre>
+                    </div>
+                </div>
+
+                <div class="api-key-hint">
+                    <p><strong>Para obtener API-Football gratis:</strong> Registrate en <a href="https://www.api-football.com/" target="_blank">api-football.com</a> (plan gratuito: 100 requests/dia, sin tarjeta de credito). La clave la introduces en el demo de arriba.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>Edgebet — Proyecto de investigacion en apuestas de futbol</p>
+            <p class="footer-note">Este demo utiliza un modelo ONNX simplificado. El sistema de produccion es significativamente mas complejo y requiere datos historicos, pipeline de features y configuracion de APIs. Todo el codigo fuente del sistema completo esta en un repository privado.</p>
+            <p class="footer-disclaimer">Las predicciones de este demo son solo para fines educativos. No constituyen consejo de apuestas. Apuesta con responsabilidad.</p>
+        </div>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
