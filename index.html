@@ -255,43 +255,11 @@
         <!-- Setup Section -->
         <section id="setup" class="section">
             <div class="container">
-                <h2>Configurar el Sistema Completo (local)</h2>
-                <div class="setup-steps">
-                    <div class="setup-card">
-                        <h3>1. Instalacion</h3>
-                        <pre><code># Clonar repo (acceso restringido)
-git clone https://github.com/cacelass/edgebet.git
-cd edgebet
-
-# Instalar dependencias
-uv sync --extra dev --extra ml</code></pre>
-                    </div>
-                    <div class="setup-card">
-                        <h3>2. Pipeline Basico</h3>
-                        <pre><code># Descargar datos
-make data LEAGUES=laliga,premier
-
-# Construir features
-make features LEAGUES=laliga
-
-# Entrenar modelo
-make train LEAGUES=laliga
-
-# Auditar
-make audit LEAGUES=laliga</code></pre>
-                    </div>
-                    <div class="setup-card">
-                        <h3>3. Predicciones</h3>
-                        <pre><code># Predicciones del dia con fixtures reales
-make predict-today
-
-# Predicciones manuales (sin API)
-make predict-manual FIXTURES="Real Madrid;Barcelona"
-
-# Escanar apuestas con edge
-make scan DAYS=1 MIN_EDGE=0.07</code></pre>
-                    </div>
-                </div>
+                <div class="setup-card" style="max-width:700px;margin:0 auto">
+                <h3>Sistema completo</h3>
+                <p style="color:var(--text-light);line-height:1.7;margin-bottom:16px">El sistema de produccion requiere el repository del proyecto (acceso restringido) con los modelos entrenados, el pipeline de features completo y la configuracion de las casas de apuestas.</p>
+                <p style="color:var(--text-light);line-height:1.7">La demo que estas usando ahora simula las predicciones con un modelo ONNX simplificado. Para el sistema completo con <code>make scan</code> real, necesitas acceso al repository.</p>
+            </div>
 
                 <div class="api-key-hint">
                     <p><strong>Para obtener API-Football gratis:</strong> Registrate en <a href="https://www.api-football.com/" target="_blank">api-football.com</a> (plan gratuito: 100 requests/dia, sin tarjeta de credito). La clave la introduces en el demo de arriba.</p>
